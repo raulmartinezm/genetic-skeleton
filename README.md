@@ -10,6 +10,7 @@ Encoding
 - Binary encoding
 
 TODO:
+
 - Permutation
 - Value encoding
 - Tree encoding

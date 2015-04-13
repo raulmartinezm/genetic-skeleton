@@ -9,7 +9,7 @@
  * @param id Label for the chromosome.
  * @return new Chromosome.
  */
-Ptr_Chromosome create_chromosome(int id)
+Ptr_Chromosome create_chromosome(int id, const int chrom_length)
 {
 #ifdef TRACE
     printf("\n---> create_chromosome. Chromosome: %d", id);
@@ -18,19 +18,19 @@ Ptr_Chromosome create_chromosome(int id)
 
     int  i = 0;
     Ptr_Chromosome chrom = NULL;
-    
+
     // Random seed initialization from current system time.
     srand(time(NULL));
 
     // Memory allocation
     chrom = (Ptr_Chromosome)malloc(sizeof(struct Chromosome));
-    chrom->gens = (int*)malloc(CHROMOSOME_LENGTH * sizeof(int));
+    chrom->gens = (int*)malloc(chrom_length * sizeof(int));
 
     chrom->id = id;
     chrom->evaluation = BAD_CHROM;
     // Initialize chromosome with random values
-    for ( i = 0 ; i < CHROMOSOME_LENGTH ; i++ ) {
-        chrom->gens[i] = rand()%2;
+    for ( i = 0 ; i < chrom_length ; i++ ) {
+        chrom->gens[i] = rand() % 2;
     }
 
     return chrom;
@@ -55,9 +55,10 @@ void free_chromosome( Ptr_Chromosome chrom ) {
  * Fitness function. Evaluates a chromosome and assigns the result to the fitness parameter.
  * The value of the fitness depends of the type of problem.
  * @param chrom Chromosome to evaluate.
+ * @param chrom_length Number of gens in a chromosome.
  * @return fitness value.
  */
-double evaluate_chromosome(Ptr_Chromosome chrom) {
+double evaluate_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
     // IMPLEMENT THE FITNESS FUNCTION
 
     double fitness = 0.0;
@@ -71,12 +72,13 @@ double evaluate_chromosome(Ptr_Chromosome chrom) {
 }
 
 /*!
-  Checks if the chromosome is valid. The validity of a chromosome depends of the problem.
-  @param chrom Chromosome to evaluate.
-  @return 0 if invalid, 1 if valid.
+ * Checks if the chromosome is valid. The validity of a chromosome depends of the problem.
+ * @param chrom Chromosome to evaluate.
+ * @param chrom_length Number of gens in a chromosome.
+ * @return 0 if invalid, 1 if valid.
  */
 
-int good_chromosome(Ptr_Chromosome chrom) {
+int good_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
 
     int valid = 1;
     // IMPLEMENT THE RULES OR CONDITIONS FOR A VALID/INVALID CHROMOSOME
@@ -89,7 +91,7 @@ int good_chromosome(Ptr_Chromosome chrom) {
  * @param list Chromosomes' list.
  * @param total Total number of chromosomes.
  */
-void classify_chromosome(Ptr_Chromosome * list, int total) {
+void classify_chromosome(Ptr_Chromosome * list, const int total) {
 #ifdef TRACE
     printf("\n---> funcion classify_chromosome");
     fflush(stdout);
@@ -117,10 +119,11 @@ void classify_chromosome(Ptr_Chromosome * list, int total) {
 /**
  * Mutate a chromosome with a binary encoding.
  * @param chrom Chromosome.
+ * @param chrom_length Number of gens in a chromosome.
  * @param mutation_type One of the define types. BIT_STRING_MUTATION: flips a bit at random position. FLIP_BITS: inverts the bits of the genoma.
  * @see http://en.wikipedia.org/wiki/Mutation_%28genetic_algorithm%29
  */
-void mutate (Ptr_Chromosome chrom, const int mutation_type)
+void mutate (Ptr_Chromosome chrom, const int chrom_length, const int mutation_type)
 {
 #ifdef TRACE
     printf("\n---> mutate. type: ");
@@ -133,11 +136,11 @@ void mutate (Ptr_Chromosome chrom, const int mutation_type)
 #endif
     int i = 0,
         position = 0,
-        *genAux = (int*)malloc(sizeof(int) * CHROMOSOME_LENGTH);
+        *genAux = (int*)malloc(sizeof(int) * chrom_length);
 
     switch (mutation_type) {
     case BIT_STRING_MUTATION:
-        position  = (int)(rand() % CHROMOSOME_LENGTH);
+        position  = (int)(rand() % chrom_length);
         if ( chrom->gens[position] == 0 ) {
             chrom->gens[position] = 1;
         } else {
@@ -146,7 +149,7 @@ void mutate (Ptr_Chromosome chrom, const int mutation_type)
 
         break;
     case FLIP_BITS:
-        for ( i = 0 ; i < CHROMOSOME_LENGTH ; i++ ) {
+        for ( i = 0 ; i < chrom_length ; i++ ) {
             genAux[i] = chrom->gens[i] == 0 ? 1 : 0;
         }
         free(chrom->gens);
@@ -158,20 +161,6 @@ void mutate (Ptr_Chromosome chrom, const int mutation_type)
 
 }
 
-
-
-// Implementar los distintos tipos de cruce
-/*
-    - One-point crossove
-    - Two-point crossover
-    - "Cut and splice"
-    - Uniform Crossover and Half Uniform Crossover
-
-    - Three parent crossver
-
-    http://en.wikipedia.org/wiki/Crossover_%28genetic_algorithm%29
-
-*/
 /**
  * Crossover function.
  * Performs the crossover operation between two chromosomes. The result are two new chromosomes
@@ -179,51 +168,64 @@ void mutate (Ptr_Chromosome chrom, const int mutation_type)
  * @param b Second parent chromosome
  * @param *c1 (Output) First child chromosome.
  * @param *c2 (Output) Second child chromosome.
+ * @param chrom_length Number of gens in a chromosome.
  * @param cross_type Possible values: ONE_POINT_CROSS, TWO_POINT_CROSS etc... Here implemented only ONE_POINT_CROSS cutting in the middle of each parent.
  * @see http://en.wikipedia.org/wiki/Crossover_%28genetic_algorithm%29
  */
-void crossover(Ptr_Chromosome a, Ptr_Chromosome b, Ptr_Chromosome *c1, Ptr_Chromosome *c2, int cross_type)
+void crossover(Ptr_Chromosome a, Ptr_Chromosome b, Ptr_Chromosome *c1, Ptr_Chromosome *c2, const int chrom_length, int cross_type)
 {
 #ifdef TRACE
     printf("\n---> crossover");
     fflush(stdout);
 #endif
 
-    int i = 0;
+    int i = 0,
+        j = 0;
 
-    // Reserva memoria para los nuevos cromosmas.
+    // Create new chromosomes and allocate memory
     *c1 = (Ptr_Chromosome)malloc(sizeof(struct Chromosome));
     *c2 = (Ptr_Chromosome)malloc(sizeof(struct Chromosome));
-    (*c1)->gens = (int*)malloc(CHROMOSOME_LENGTH * sizeof(int));
-    (*c2)->gens = (int*)malloc(CHROMOSOME_LENGTH * sizeof(int));
+    (*c1)->gens = (int*)malloc(chrom_length * sizeof(int));
+    (*c2)->gens = (int*)malloc(chrom_length * sizeof(int));
 
 
     (*c1)->evaluation = BAD_CHROM;
     (*c2)->evaluation = BAD_CHROM;
 
-    // Basic crossover in the middle
-    for (i = 0 ; i < CHROMOSOME_LENGTH ; i++ )
-    {
-        (*c1)->gens[i] = a->gens[i];
-        (*c2)->gens[i] = b->gens[i];
-    }
-}
 
-int genetic_main()
+    switch (cross_type) {
+
+    case ONE_POINT_CROSS:
+        // Basic crossover in the middle
+        for (i = 0 , j = chrom_length / 2 ; i < chrom_length / 2 , j < chrom_length ; i++, j++ )
+        {
+            (*c1)->gens[i] = a->gens[i];
+            (*c2)->gens[i] = b->gens[i];
+            (*c1)->gens[j] = b->gens[j];
+            (*c2)->gens[j] = a->gens[j];
+        }
+
+
+        break;
+    }
+
+} // END crossover
+
+int genetic_main(Ptr_config config)
 {
 #ifdef TRACE
     printf("\n---> genetico. col %d", col);
     fflush(stdout);
 #endif
+    const int TOTAL_CHROM = config->total_chrom;
+    const int MAX_ITER = config->max_iter;
+    const int MAX_REP_MEJOR = config->max_iter_best;
+    const int CHROMOSOME_LENGTH = config->chrom_length;
+
     int rep_mejor, fin,  ale1, ale2, eti1, eti2, iter, i, validos, np;
     double mejor;
     Ptr_Chromosome *List_Chromosome;
 
-    /*
-        Ptr_Info information;
-        information = (Ptr_Info)malloc(sizeof(struct Info));
-
-    */
     rep_mejor = 10;
     fin = 0;
     ale1 = 0;
