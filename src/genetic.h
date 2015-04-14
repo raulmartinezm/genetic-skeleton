@@ -8,12 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#define TRACE 1
-
 /** Initial fitness value, after being created and before evaluation all chromosomes are "bad". */
 #define BAD_CHROM  -999999
-/** Chromosome size of number of gens */
-#define CHROMOSOME_LENGTH 20
 // Mutation types for the mutation function 
 #define BIT_STRING_MUTATION	1
 #define FLIP_BITS	2

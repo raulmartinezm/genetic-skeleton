@@ -12,7 +12,7 @@
 Ptr_Chromosome create_chromosome(int id, const int chrom_length)
 {
 #ifdef TRACE
-    printf("\n---> create_chromosome. Chromosome: %d", id);
+    printf("---> create_chromosome. Chromosome: %d\n", id);
     fflush(stdout);
 #endif
 
@@ -77,7 +77,6 @@ double evaluate_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
  * @param chrom_length Number of gens in a chromosome.
  * @return 0 if invalid, 1 if valid.
  */
-
 int good_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
 
     int valid = 1;
@@ -93,7 +92,7 @@ int good_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
  */
 void classify_chromosome(Ptr_Chromosome * list, const int total) {
 #ifdef TRACE
-    printf("\n---> funcion classify_chromosome");
+    printf("---> funcion classify_chromosome\n");
     fflush(stdout);
 #endif
     int i, j;
@@ -126,12 +125,13 @@ void classify_chromosome(Ptr_Chromosome * list, const int total) {
 void mutate (Ptr_Chromosome chrom, const int chrom_length, const int mutation_type)
 {
 #ifdef TRACE
-    printf("\n---> mutate. type: ");
+    printf("---> mutate. type: ");
     if (mutation_type == BIT_STRING_MUTATION) {
         printf("BIT_STRING_MUTATION");
     } else {
         printf("FLIP_BITS");
     }
+    printf("\n");
     fflush(stdout);
 #endif
     int i = 0,
@@ -175,7 +175,7 @@ void mutate (Ptr_Chromosome chrom, const int chrom_length, const int mutation_ty
 void crossover(Ptr_Chromosome a, Ptr_Chromosome b, Ptr_Chromosome *c1, Ptr_Chromosome *c2, const int chrom_length, int cross_type)
 {
 #ifdef TRACE
-    printf("\n---> crossover");
+    printf("---> crossover\n");
     fflush(stdout);
 #endif
 
@@ -214,19 +214,20 @@ void crossover(Ptr_Chromosome a, Ptr_Chromosome b, Ptr_Chromosome *c1, Ptr_Chrom
 int genetic_main(Ptr_config config)
 {
 #ifdef TRACE
-    printf("\n---> genetico. col %d", col);
+    printf("---> genetic_main.\n");
     fflush(stdout);
 #endif
+
     const int TOTAL_CHROM = config->total_chrom;
     const int MAX_ITER = config->max_iter;
     const int MAX_REP_MEJOR = config->max_iter_best;
     const int CHROMOSOME_LENGTH = config->chrom_length;
 
-    int rep_mejor, fin,  ale1, ale2, eti1, eti2, iter, i, validos, np;
-    double mejor;
-    Ptr_Chromosome *List_Chromosome;
+    int rep_best, fin,  ale1, ale2, eti1, eti2, iter, i, validos, np;
+    double best;
+    Ptr_Chromosome *List_Chromosome; // Array of chromosmes. Population.
 
-    rep_mejor = 10;
+    rep_best = 10;
     fin = 0;
     ale1 = 0;
     ale2 = 0;
@@ -237,7 +238,7 @@ int genetic_main(Ptr_config config)
     i = 0;
     validos = 0; // para calcular el porcentaje de validos.
 
-    // Estructuras para medir el tiempo de ejecucion.
+    // Time measurement variables
     struct timeval *tv;
     struct timezone *tz;
     long tf, ti, si, sf;
@@ -254,103 +255,97 @@ int genetic_main(Ptr_config config)
     srand (time (NULL));
 
     /*
-     * #########################################
-     * ###### GENERAR PROBLACION INICIAL #######
-     * #########################################
+     * ##########################################
+     * ###### GENERATE INITIAL POPULATION #######
+     * ##########################################
      */
-    //Reservar memoria para todos los cromosomas
+
     List_Chromosome = (Ptr_Chromosome*)malloc(TOTAL_CHROM * sizeof(Ptr_Chromosome));
 
-#ifdef PARALELO
-    #pragma omp parallel for private (i) schedule (static)
-#endif
-    for ( i = 0 ; i < TOTAL_CHROM ; i++ ) // Genera cromosomas.
+
+// Canditate loop to be paralelized with OpenMP
+    for ( i = 0 ; i < TOTAL_CHROM ; i++ )
     {
-        List_Chromosome[i] = create_chromosome(i);
+        List_Chromosome[i] = create_chromosome(i, CHROMOSOME_LENGTH);
     }
 
-    rep_mejor = 0;
-    mejor = -1.0; //se le da un valor que no tiene ninguno para que no coincida
+    rep_best = 0;
+    best = -1.0; //se le da un valor que no tiene ninguno para que no coincida
 
-#ifndef PARCIAL
-//Si esta definida la constante no ejecuta el algoritmo entero, solo generar poblacion inicial.
-    while ( fin == 0 ) // ######### BUCLE PRINCIPAL ##########
+// ######### MAIN LOOP ##########
+    while ( fin == 0 )
     {
 
         /*
-         * ########################################
-         * ###### EVALUACION Y CLASIFICACION ######
-         * ########################################
+         * ###########################################
+         * ###### EVALUATION AND CLASSIFICATION ######
+         * ###########################################
          */
 
-#ifdef PARALELO
-        #pragma omp parallel for private (i) schedule (static)
-#endif
+        // Canditate loop to be paralelized with OpenMP
         for ( i = 0  ; i < TOTAL_CHROM ; i++ )
         {
-            if ( ((List_Chromosome[i])->evaluation == BAD_CHROM) && (good_chromosome(List_Chromosome[i]) == 1) )
+            if ( ((List_Chromosome[i])->evaluation == BAD_CHROM) && (good_chromosome(List_Chromosome[i], CHROMOSOME_LENGTH) == 1) )
             {
-                List_Chromosome[i]->evaluation = evaluate_chromosome(List_Chromosome[i]);
+                List_Chromosome[i]->evaluation = evaluate_chromosome(List_Chromosome[i], CHROMOSOME_LENGTH);
             };
         };
         classify_chromosome(List_Chromosome, TOTAL_CHROM);
-        mejor = List_Chromosome[0]->evaluation;
+        best = List_Chromosome[0]->evaluation;
 
         /*
-         * ############################################
-         * ###### REPRODUCCION DE LOS CROMOSOMAS ######
-         * ############################################
+         * #####################################
+         * ###### CHROMOSOME REPRODUCTION ######
+         * #####################################
          */
 #ifdef TRACE
-        printf("\nReproduccion de los cromosomas");
+        printf("Reproduccion de los cromosomas\n");
         fflush(stdout);
 #endif
 
-#ifdef PARALELO
-        #pragma omp parallel for private (i,ale1,ale2,eti1,eti2) schedule (static)
-#endif
+        // Canditate loop to be paralelized with OpenMP
         for ( i = TOTAL_CHROM / 2 ; i < TOTAL_CHROM - 1 ; i = i + 2 )
         {
-            //vamos a eliminar la mitad y la otra mitad sobrevivira
+            // Elimination of the worst half part of the population
             eti1 = List_Chromosome[i]->id;
             eti2 = List_Chromosome[i + 1]->id;
-            ale1 = (int)(rand() % (TOTAL_CHROM / 2)); //solo se reproducen los primeros. Coge 2 aleatorios entre la primera mitad
+            ale1 = (int)(rand() % (TOTAL_CHROM / 2));
             ale2 = (int)(rand() % (TOTAL_CHROM / 2));
 
-            free_chromosome(List_Chromosome[i]);// Borra dos de los ultimos
+            free_chromosome(List_Chromosome[i]);
             free_chromosome(List_Chromosome[i + 1]);
             List_Chromosome[i] = NULL;
             List_Chromosome[i + 1] = NULL;
-// MOSTRAMOS LOS 3 MEJORES
 
-            crossover(List_Chromosome[ale1], List_Chromosome[ale2], &List_Chromosome[i], &List_Chromosome[i + 1]);
+            crossover(List_Chromosome[ale1], List_Chromosome[ale2], &List_Chromosome[i], &List_Chromosome[i + 1], CHROMOSOME_LENGTH, ONE_POINT_CROSS);
             List_Chromosome[i]->id = eti1;
             List_Chromosome[i + 1]->id = eti2;
         }
+
         /*
          * ####################################
-         * #######       MUTACION      ########
+         * #######       MUTATION      ########
          * ####################################
-        */
+         */
         mut = (double)(rand() % (100));
         if ( mut < 10 ) //el 10% de que haya mutacion
         {
             ale1 = (int)(rand() % (TOTAL_CHROM / 2));
-            mutate(List_Chromosome[ale1], BIT_STRING_MUTATION);
+            mutate(List_Chromosome[ale1], CHROMOSOME_LENGTH, BIT_STRING_MUTATION);
         };
 
         iter++;
 
-        //CONDICION DE FIN
-        if ((mejor == (List_Chromosome[0])->evaluation) && (mejor != BAD_CHROM))
-            rep_mejor++;
+        // CHECK END CONDITIONS
+        if ((best == (List_Chromosome[0])->evaluation) && (best != BAD_CHROM))
+            rep_best++;
         else
         {
-            rep_mejor = 0;
-            mejor = (List_Chromosome[0])->evaluation;
+            rep_best = 0;
+            best = (List_Chromosome[0])->evaluation;
         };
 
-        if ( (rep_mejor == MAX_REP_MEJOR) || (iter == MAX_ITER)   )
+        if ( (rep_best == MAX_REP_MEJOR) || (iter == MAX_ITER)   )
             fin = 1;
 
         /*
@@ -359,56 +354,56 @@ int genetic_main(Ptr_config config)
          * #####################################################################
          */
 
-#ifdef PARALELO
-        #pragma omp parallel for private(i) schedule(static)
-#endif
+// Canditate loop to be paralelized with OpenMP
         for ( i = 0  ; i < TOTAL_CHROM ; i++ )
         {
-            if ( ((List_Chromosome[i])->evaluation == BAD_CHROM) && (good_chromosome(List_Chromosome[i]) == 1) )
+            if ( ((List_Chromosome[i])->evaluation == BAD_CHROM) && (good_chromosome(List_Chromosome[i], CHROMOSOME_LENGTH) == 1) )
             {
-                List_Chromosome[i]->evaluation = evaluate_chromosome(List_Chromosome[i]);
+                List_Chromosome[i]->evaluation = evaluate_chromosome(List_Chromosome[i], CHROMOSOME_LENGTH);
             };
         };
         classify_chromosome(List_Chromosome, TOTAL_CHROM);
-// MOSTRAMOS LOS 3 MEJORES
 
-//        printf("\n===================== ITERACION %d. 3 MEJORES CROMOSOMAS: =====================",iter);
-//        for ( i=0 ; i<3 ; i++)
-//        {
-//            show_chromosome(List_Chromosome[i]);
-//            show_constraints(List_Chromosome[i],X,Y,col);
-//        }
+// PRINT 3 BEST CHROMOSOMES
 
-    };// ########### FIN BUCLE PRINCIPAL ###########
-#endif // Fin de condicion para ejecutar el algoritmo completo
+        printf("%d ITERATION. 3 BEST CHROMOSOMES:\n", iter);
+        for ( i = 0 ; i < 3 ; i++)
+        {
+            show_chromosome(List_Chromosome[i], CHROMOSOME_LENGTH);
+        }
 
+    };// ########### END OF MAIN LOOP ###########
+
+
+    // TIME MEASUREMENT
     gettimeofday(tv, tz);
     sf = (tv->tv_sec);
     tf = (tv->tv_usec);
     tf = sf * 1000000 + tf;
     tiempo = (1.0 * tf - 1.0 * ti) / 1000000.0;
-    printf("\n----------------Tiempo llamada T=%lf", tiempo);
+    printf("\nExecution time T=%lf s.\n", tiempo);
     fflush(stdout);
 
-    // CALCULAR CROMOSMAS VALIDOS
+    // CALC VALID CHROMOSOMES.
     for ( i = 0 ; i < TOTAL_CHROM ; i++ )
         if ( List_Chromosome[i]->evaluation != BAD_CHROM )
             validos++;
-    printf("\nCromosomas validos: %d%%", (validos * 100) / TOTAL_CHROM);
+    printf("%d%% of valid chromosomes.\n", (validos * 100) / TOTAL_CHROM);
 
-    // Liberar memoria
+    // Free memory
     for ( i = 3 ; i < TOTAL_CHROM ; i++ )
         free_chromosome(List_Chromosome[i]);
     List_Chromosome = realloc(List_Chromosome, 3 * sizeof(struct Chromosome));
-    /*
+}
 
-        information->list_size = 3;
-        information->list = List_Chromosome;
-        information->time = tiempo;
-        information->column = col;
-        information->valids_ratio = (validos * 100) / TOTAL_CHROM;
-        information->population = TOTAL_CHROM;
-        // Devuelve los 3 mejores resultados.
-        return information;
-    */
+
+void show_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
+    printf("Chromosome: %6d | Fitness: %f\n", chrom->id, chrom->evaluation);
+#ifdef DEBUG
+    int i = 0;
+    for (i = 0; i < chrom_length ; i++) {
+        printf("%d ", chrom->gens[i]);
+    }
+    printf("\n");
+#endif
 }
