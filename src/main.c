@@ -13,4 +13,6 @@ int main (int argc, char* argv[]) {
 	// Call genetic main method.
 
 	genetic_main(config);
+	
+	return EXIT_SUCCESS;
 }

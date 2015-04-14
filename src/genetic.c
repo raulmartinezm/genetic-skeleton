@@ -1,5 +1,6 @@
 /** @file genetic.c
- *  @brief Partial implementation ofgenetic algorithm.
+ *  @brief Partial implementation of genetic algorithm.
+ *  Skeleton of genetic chromosome. It's mostly a binary chromosome implementation.
  */
 
 #include "genetic.h"
@@ -38,7 +39,7 @@ Ptr_Chromosome create_chromosome(int id, const int chrom_length)
 
 /**
  * Free memory allocated for chromosome.
- * @param chrom Cromosoma.
+ * @param chrom Chromosome.
  */
 void free_chromosome( Ptr_Chromosome chrom ) {
 
@@ -99,7 +100,7 @@ void classify_chromosome(Ptr_Chromosome * list, const int total) {
     Ptr_Chromosome chrom;
     double valor;
 
-// #pragma omp parallel for private (i,j) schedule (static) //SEGMENTATION FAULT
+    // Parallelizable loop
     for ( i = 0 ; i < total ; i++ )
     {
         for ( j = i + 1 ; j < total ; j++ )
@@ -211,6 +212,28 @@ void crossover(Ptr_Chromosome a, Ptr_Chromosome b, Ptr_Chromosome *c1, Ptr_Chrom
 
 } // END crossover
 
+
+/**
+ * Prints a chromosome in screen
+ * @param chrom Chromosome
+ * @chrom_length Number of gens in chromosome.
+ */
+void show_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
+    printf("Chromosome: %6d | Fitness: %f\n", chrom->id, chrom->evaluation);
+#ifdef DEBUG
+    int i = 0;
+    for (i = 0; i < chrom_length ; i++) {
+        printf("%d ", chrom->gens[i]);
+    }
+    printf("\n");
+#endif
+}
+
+/**
+ * Main method of genetic algorithm.
+ * @param config Struct with configuraiton parameters like population size, number of gens, etc...
+ * @see struct Chromosome_configuration
+ */
 int genetic_main(Ptr_config config)
 {
 #ifdef TRACE
@@ -236,7 +259,7 @@ int genetic_main(Ptr_config config)
 
     iter = 0;
     i = 0;
-    validos = 0; // para calcular el porcentaje de validos.
+    validos = 0; /**< Percentage of valid chromosomes */
 
     // Time measurement variables
     struct timeval *tv;
@@ -364,8 +387,7 @@ int genetic_main(Ptr_config config)
         };
         classify_chromosome(List_Chromosome, TOTAL_CHROM);
 
-// PRINT 3 BEST CHROMOSOMES
-
+        // PRINT 3 BEST CHROMOSOMES
         printf("%d ITERATION. 3 BEST CHROMOSOMES:\n", iter);
         for ( i = 0 ; i < 3 ; i++)
         {
@@ -384,7 +406,7 @@ int genetic_main(Ptr_config config)
     printf("\nExecution time T=%lf s.\n", tiempo);
     fflush(stdout);
 
-    // CALC VALID CHROMOSOMES.
+    // CALCULATE PERCENTAGE OF VALID CHROMOSOMES.
     for ( i = 0 ; i < TOTAL_CHROM ; i++ )
         if ( List_Chromosome[i]->evaluation != BAD_CHROM )
             validos++;
@@ -394,16 +416,4 @@ int genetic_main(Ptr_config config)
     for ( i = 3 ; i < TOTAL_CHROM ; i++ )
         free_chromosome(List_Chromosome[i]);
     List_Chromosome = realloc(List_Chromosome, 3 * sizeof(struct Chromosome));
-}
-
-
-void show_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
-    printf("Chromosome: %6d | Fitness: %f\n", chrom->id, chrom->evaluation);
-#ifdef DEBUG
-    int i = 0;
-    for (i = 0; i < chrom_length ; i++) {
-        printf("%d ", chrom->gens[i]);
-    }
-    printf("\n");
-#endif
 }

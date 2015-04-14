@@ -1,8 +1,7 @@
-/** @file genetic.h
- *  @brief Header of genetic algorithm skeleton.
+/** @file genetic_knapsack.h
+ *  @brief Header of genetic algorithm implementation for knapsack problem.
  *
- * A list of genetic algorithm applications
- * @see http://en.wikipedia.org/wiki/List_of_genetic_algorithm_applications
+ * @see http://en.wikipedia.org/wiki/Knapsack_problem
  */
 
 #include <stdio.h>
@@ -15,11 +14,11 @@
 #define FLIP_BITS	2
 
 // Chromosome crossover methods.
-#define ONE_POINT_CROSS 10
-#define TWO_POINT_CROSS 11
-#define CUT_AND_SPLICE_CROSS 12
-#define UNIFORM_CROSSOVER 13
-#define HALF_UNIFORM_CROSSOVER 14
+#define ONE_POINT_CROSS 1
+#define TWO_POINT_CROSS 2
+#define CUT_AND_SPLICE_CROSS 3
+#define UNIFORM_CROSSOVER 4
+#define HALF_UNIFORM_CROSSOVER 5
 
 
 struct Chromosome_configuration {
