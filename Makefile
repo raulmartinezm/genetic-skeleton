@@ -14,6 +14,10 @@ debug: all
 trace: OPTIONS += -DTRACE
 trace: all
 
+test: genetic
+	$(CC) $(OPTIONS) $(FLAGS) ./obj/genetic.o ./src/tests/test.c -o ./bin/tests
+	./bin/tests
+
 clean:
 	rm -frv ./obj/* ./bin/* 
 doc:

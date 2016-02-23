@@ -17,7 +17,7 @@ Ptr_Chromosome create_chromosome(int id, const int chrom_length)
     fflush(stdout);
 #endif
 
-    int  i = 0;
+
     Ptr_Chromosome chrom = NULL;
 
     // Random seed initialization from current system time.
@@ -29,13 +29,18 @@ Ptr_Chromosome create_chromosome(int id, const int chrom_length)
 
     chrom->id = id;
     chrom->evaluation = BAD_CHROM;
-    // Initialize chromosome with random values
-    for ( i = 0 ; i < chrom_length ; i++ ) {
-        chrom->gens[i] = rand() % 2;
-    }
 
     return chrom;
 }
+
+void seed_with_random_values(Ptr_Chromosome chrom, ssize_t chrom_length) {
+    int  i = 0;
+
+    for ( i = 0 ; i < chrom_length ; i++ ) {
+        chrom->gens[i] = rand() % 2;
+    } 
+}
+
 
 /**
  * Free memory allocated for chromosome.
@@ -222,6 +227,7 @@ void show_chromosome(Ptr_Chromosome chrom, const int chrom_length) {
     printf("Chromosome: %6d | Fitness: %f\n", chrom->id, chrom->evaluation);
 #ifdef DEBUG
     int i = 0;
+    printf ("gens: ");
     for (i = 0; i < chrom_length ; i++) {
         printf("%d ", chrom->gens[i]);
     }

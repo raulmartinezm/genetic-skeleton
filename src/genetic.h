@@ -45,6 +45,7 @@ typedef struct Chromosome_configuration * Ptr_config;
 typedef struct Chromosome * Ptr_Chromosome;
 
 Ptr_Chromosome create_chromosome(int id, const int chrom_length);
+void seed_with_random_values(Ptr_Chromosome chrom, ssize_t chrom_length);
 void free_chromosome(Ptr_Chromosome chrom);
 double evaluate_chromosome(Ptr_Chromosome chrom, const int chrom_length);
 int good_chromosome(Ptr_Chromosome chrom, const int chrom_length);
