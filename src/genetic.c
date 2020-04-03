@@ -20,8 +20,7 @@ Ptr_Chromosome create_chromosome(int id, const int chrom_length)
 
     Ptr_Chromosome chrom = NULL;
 
-    // Random seed initialization from current system time.
-    srand(time(NULL));
+
 
     // Memory allocation
     chrom = (Ptr_Chromosome)malloc(sizeof(struct Chromosome));
@@ -296,6 +295,7 @@ int genetic_main(Ptr_config config)
     for ( i = 0 ; i < TOTAL_CHROM ; i++ )
     {
         List_Chromosome[i] = create_chromosome(i, CHROMOSOME_LENGTH);
+        seed_with_random_values(List_Chromosome[i],CHROMOSOME_LENGTH);
     }
 
     rep_best = 0;
