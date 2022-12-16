@@ -1,8 +1,9 @@
 CC=gcc
 FLAGS=-O3
+BINARY_OUT=./bin/genetic
 
 all: genetic
-	$(CC) $(OPTIONS) $(FLAGS) ./obj/genetic.o ./src/main.c -o ./bin/genetic
+	$(CC) $(OPTIONS) $(FLAGS) ./obj/genetic.o ./src/main.c -o $(BINARY_OUT)
 
 genetic:
 	mkdir -p obj bin
@@ -22,3 +23,7 @@ clean:
 	rm -frv ./obj/* ./bin/* 
 doc:
 	doxygen Doxyfile -f
+
+run:
+	$(BINARY_OUT)
+
